@@ -8,7 +8,7 @@ import ast
 class VirtualConnectome:
     def __init__(self):
 
-	self.comm = MPI.COMM_WORLD
+	    self.comm = MPI.COMM_WORLD
         self.rank = self.comm.Get_rank()
         assert(nest.Rank() == self.rank)
         '''
@@ -20,7 +20,7 @@ class VirtualConnectome:
         self.dt = 0.1
         self.number_excitatory_neurons = 800
         self.number_inhibitory_neurons = 200
-	self.regions = 1
+	    self.regions = 1
 
         # Structural_plasticity properties
         self.update_interval = 100
@@ -90,7 +90,7 @@ class VirtualConnectome:
 
         self.nodes_e =  [None] * self.regions
         self.nodes_i  = [None] * self.regions
-	self.loc_e = [[] for i in range(self.regions)]
+	    self.loc_e = [[] for i in range(self.regions)]
         self.loc_i = [[] for i in range(self.regions)]
 	# Create a list to store mean values
         if nest.Rank() == 0:
@@ -111,7 +111,7 @@ class VirtualConnectome:
         self.psc_i = -585.0
         self.psc_ext = 6.2
 
-	self.setup_nett()
+	    self.setup_nett()
 
     def setup_nett(self):
         '''
@@ -133,7 +133,7 @@ class VirtualConnectome:
             self.fr_e_slot_out = nett.slot_out_float_vector_message('fr_e')
             self.fr_i_slot_out = nett.slot_out_float_vector_message('fr_i')
             self.total_connections_slot_out = nett.slot_out_float_vector_message('total_connections_i')
-	    self.total_connections_e_slot_out = nett.slot_out_float_vector_message('total_connections_e')
+	        self.total_connections_e_slot_out = nett.slot_out_float_vector_message('total_connections_e')
             self.num_regions_slot_out = nett.slot_out_float_message('num_regions')
 
             self.run_slot_in = nett.slot_in_float_message()
@@ -199,55 +199,55 @@ class VirtualConnectome:
         called Den_ex. In a similar manner, synaptic elements for inhibitory
         synapses are defined.
         '''
-	spsyn_names=['synapse_in'+str(nam) for nam in range(self.regions)]
-	spsyn_names_e=['synapse_ex'+str(nam) for nam in range(self.regions)]
+	    spsyn_names=['synapse_in'+str(nam) for nam in range(self.regions)]
+	    spsyn_names_e=['synapse_ex'+str(nam) for nam in range(self.regions)]
         sps = {}
-	for x in range(0,self.regions) :
-                nest.CopyModel('static_synapse', 'synapse_in'+str(x))
-                nest.SetDefaults('synapse_in'+str(x), {'weight': self.psc_i, 'delay': 1.0})
-		nest.CopyModel('static_synapse', 'synapse_ex'+str(x))
-        	nest.SetDefaults('synapse_ex'+str(x), {'weight': self.psc_e, 'delay': 1.0})
-                sps[spsyn_names[x]]= {
+	    for x in range(0,self.regions) :
+            nest.CopyModel('static_synapse', 'synapse_in'+str(x))
+            nest.SetDefaults('synapse_in'+str(x), {'weight': self.psc_i, 'delay': 1.0})
+		    nest.CopyModel('static_synapse', 'synapse_ex'+str(x))
+            nest.SetDefaults('synapse_ex'+str(x), {'weight': self.psc_e, 'delay': 1.0})
+            sps[spsyn_names[x]]= {
 		            'model': 'synapse_in'+str(x),
 		            'post_synaptic_element': 'Den_in'+str(x),
 		            'pre_synaptic_element': 'Axon_in'+str(x),
                 }
-                sps[spsyn_names_e[x]]= {
+            sps[spsyn_names_e[x]]= {
 		            'model': 'synapse_ex'+str(x),
 		            'post_synaptic_element': 'Den_ex'+str(x),
 		            'pre_synaptic_element': 'Axon_ex'+str(x),
                 }
-	nest.SetStructuralPlasticityStatus({'structural_plasticity_synapses': sps})
+	    nest.SetStructuralPlasticityStatus({'structural_plasticity_synapses': sps})
 
     def create_nodes(self):
         '''
         Now we assign the growth curves to the corresponding synaptic elements
         '''
-	synaptic_elements_e = {}
+	    synaptic_elements_e = {}
         synaptic_elements_i = {}
         
         all_e_nodes = nest.Create('iaf_psc_alpha', self.number_excitatory_neurons*self.regions)
         all_i_nodes = nest.Create('iaf_psc_alpha', self.number_inhibitory_neurons*self.regions)
         
-	for x in range(0,self.regions) :
-		synaptic_elements_e = {
+	    for x in range(0,self.regions) :
+		    synaptic_elements_e = {
 		    'Den_ex'+str(x): self.growth_curve_e_e,
                     'Den_in'+str(x): self.growth_curve_e_i,
                     'Axon_ex'+str(x): self.growth_curve_e_e,
 		}
-		synaptic_elements_i = {
+		    synaptic_elements_i = {
                     'Den_ex'+str(x): self.growth_curve_i_e,
                     'Den_in'+str(x): self.growth_curve_i_i,
 		    'Axon_in'+str(x): self.growth_curve_i_i,
 		}
 
-		self.nodes_e[x] = all_e_nodes[x*self.number_excitatory_neurons:(x+1)*self.number_excitatory_neurons]
-                self.nodes_i[x] = all_i_nodes[x*self.number_inhibitory_neurons:(x+1)*self.number_inhibitory_neurons]
+		    self.nodes_e[x] = all_e_nodes[x*self.number_excitatory_neurons:(x+1)*self.number_excitatory_neurons]
+            self.nodes_i[x] = all_i_nodes[x*self.number_inhibitory_neurons:(x+1)*self.number_inhibitory_neurons]
 
-                self.loc_e[x] = [stat['global_id'] for stat in nest.GetStatus(self.nodes_e[x]) if stat['local']]
-                self.loc_i[x] = [stat['global_id'] for stat in nest.GetStatus(self.nodes_i[x]) if stat['local']]
-		nest.SetStatus(self.loc_e[x], {'synaptic_elements': synaptic_elements_e})
-                nest.SetStatus(self.loc_i[x], {'synaptic_elements': synaptic_elements_i})
+            self.loc_e[x] = [stat['global_id'] for stat in nest.GetStatus(self.nodes_e[x]) if stat['local']]
+            self.loc_i[x] = [stat['global_id'] for stat in nest.GetStatus(self.nodes_i[x]) if stat['local']]
+		    nest.SetStatus(self.loc_e[x], {'synaptic_elements': synaptic_elements_e})
+            nest.SetStatus(self.loc_i[x], {'synaptic_elements': synaptic_elements_i})
 
     def connect_external_input(self):
         '''
@@ -255,7 +255,7 @@ class VirtualConnectome:
         '''
         noise = nest.Create('poisson_generator')
         nest.SetStatus(noise, {"rate": self.bg_rate})
-	for x in range(0,self.regions) :
+	    for x in range(0,self.regions) :
             nest.Connect(noise, self.nodes_e[x], 'all_to_all',
                      {'weight': self.psc_ext, 'delay': 1.0})
             nest.Connect(noise, self.nodes_i[x], 'all_to_all',
@@ -270,19 +270,19 @@ class VirtualConnectome:
         if nest.Rank() == 0:
             msg_fr_e = float_vector_message()
             msg_fr_i = float_vector_message()
-	for x in range(0,self.regions) :
+	    for x in range(0,self.regions) :
             fr_e = nest.GetStatus(self.loc_e[x], 'fr'),  # Firing rate
             fr_e = self.comm.gather(fr_e, root=0)
-	    fr_i = nest.GetStatus(self.loc_i[x], 'fr'),  # Firing rate
+	        fr_i = nest.GetStatus(self.loc_i[x], 'fr'),  # Firing rate
             fr_i = self.comm.gather(fr_i, root=0)
             if nest.Rank() == 0:
-		mean = numpy.mean(list(fr_e))
-	        self.mean_fr_e[x].append(mean)
+		        mean = numpy.mean(list(fr_e))
+	            self.mean_fr_e[x].append(mean)
                 msg_fr_e.value.append(mean)
                 mean = numpy.mean(list(fr_i))
                 self.mean_fr_i[x].append(mean)
                 msg_fr_i.value.append(mean)
-	if nest.Rank() == 0:
+	    if nest.Rank() == 0:
             self.fr_e_slot_out.send(msg_fr_e.SerializeToString())
             self.fr_i_slot_out.send(msg_fr_i.SerializeToString())
 
@@ -290,18 +290,18 @@ class VirtualConnectome:
         if nest.Rank() == 0:
             msg_i = float_vector_message()
             msg_e = float_vector_message()
-	for x in range(0,self.regions) :
-	    syn_elems_e = nest.GetStatus(self.loc_e[x], 'synaptic_elements')
-	    syn_elems_i = nest.GetStatus(self.loc_i[x], 'synaptic_elements')
+	    for x in range(0,self.regions) :
+	        syn_elems_e = nest.GetStatus(self.loc_e[x], 'synaptic_elements')
+	        syn_elems_i = nest.GetStatus(self.loc_i[x], 'synaptic_elements')
             sum_neurons_e = sum(neuron['Axon_ex'+str(x)]['z_connected'] for neuron in syn_elems_e)
             sum_neurons_e = self.comm.gather(sum_neurons_e, root=0)
-	    sum_neurons_i = sum(neuron['Axon_in'+str(x)]['z_connected'] for neuron in syn_elems_i)
+	        sum_neurons_i = sum(neuron['Axon_in'+str(x)]['z_connected'] for neuron in syn_elems_i)
             sum_neurons_i = self.comm.gather(sum_neurons_i, root=0)
             
             if nest.Rank() == 0:
-	        self.total_connections_i[x] = (sum(sum_neurons_i))
+	            self.total_connections_i[x] = (sum(sum_neurons_i))
                 msg_i.value.append(sum(sum_neurons_i))
-		self.total_connections_e[x] = (sum(sum_neurons_e))
+		        self.total_connections_e[x] = (sum(sum_neurons_e))
                 msg_e.value.append(sum(sum_neurons_e))
         if nest.Rank() == 0:
             self.total_connections_e_slot_out.send(msg_e.SerializeToString())
@@ -316,7 +316,7 @@ class VirtualConnectome:
         nest.SetStructuralPlasticityStatus({'structural_plasticity_update_interval': self.update_interval, })
 
         self.update_growth_rate()
-	self.update_eta()
+	    self.update_eta()
 
         nest.Simulate(self.record_interval)
         
@@ -347,7 +347,7 @@ class VirtualConnectome:
             nest.SetStatus(self.nodes_e[x], 'synaptic_elements_param', {'Den_in'+str(x): synaptic_elements_i})
             nest.SetStatus(self.nodes_e[x], 'synaptic_elements_param', {'Den_ex'+str(x): synaptic_elements_e})
             nest.SetStatus(self.nodes_e[x], 'synaptic_elements_param', {'Axon_ex'+str(x): synaptic_elements_e})
-	    nest.SetStatus(self.nodes_i[x], 'synaptic_elements_param', {'Axon_in'+str(x):synaptic_elements_e})
+	        nest.SetStatus(self.nodes_i[x], 'synaptic_elements_param', {'Axon_in'+str(x):synaptic_elements_e})
             nest.SetStatus(self.nodes_i[x], 'synaptic_elements_param', {'Den_in'+str(x):synaptic_elements_i})
             nest.SetStatus(self.nodes_i[x], 'synaptic_elements_param', {'Den_ex'+str(x):synaptic_elements_e})
 
@@ -369,7 +369,7 @@ class VirtualConnectome:
         self.num_regions_slot_out.send(msg.SerializeToString())
 
     def get_quit_state(self):
-	if nest.Rank() == 0:
+	    if nest.Rank() == 0:
             quit_state = self.observe_quit_slot.state
         else:
             quit_state = False
